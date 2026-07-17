@@ -25,9 +25,9 @@ framework — plain HTML/CSS, plus GSAP core + `ScrollTrigger` + `ScrollSmoother
   are reordered again.
 - [css/style.css](css/style.css) — all styling. Design tokens (colors, fonts, spacing) live as CSS
   custom properties in `:root` at the top of the file, adapted from a black-canvas /
-  single-gold-accent design system. `.mlabel`, `.btn`, `.card`, `.ledger__*`, `.timeline__*`,
-  `.stat-cell` etc. are the reusable block classes; keep new sections consistent with these rather
-  than introducing one-off inline styles. `--section-pad-y` controls the vertical breathing room
+  single-gold-accent design system. `.mlabel`, `.btn`, `.card`, `.ledger__*`, `.timeline__*` etc.
+  are the reusable block classes; keep new sections consistent with these rather than introducing
+  one-off inline styles. `--section-pad-y` controls the vertical breathing room
   between sections — bump it there rather than per-section if the whole page needs more/less air.
 - `#top, #about, #strengths, #match, #career, #contact { scroll-margin-top: ... }` exists
   specifically so anchor-jump/scrollIntoView navigation clears the sticky/pinned nav — the
@@ -79,9 +79,11 @@ framework — plain HTML/CSS, plus GSAP core + `ScrollTrigger` + `ScrollSmoother
 - **Scroll reveal**: elements with class `.reveal` start hidden/offset and get `.is-visible` (via a
   small vanilla-JS `IntersectionObserver` at the end of `index.html`) the first time they enter the
   viewport, producing a fade/rise-in as the page is scrolled. Respects
-  `prefers-reduced-motion`. Applied to every `<section>`/`<footer>` after the intro — not the hero
-  header (it has its own gated reveal, see below) or the intro itself, since the intro is already
-  visible on load.
+  `prefers-reduced-motion`. Applied to every `<section>`/`<footer>` after the intro except
+  `#strengths` — not the hero header (it has its own gated reveal, see below), the intro itself
+  (already visible on load), or `#strengths` (its cards get their own per-card scroll reveal
+  instead, see "Strengths split layout" below; this has been true since the very first commit, not
+  something this redesign changed).
 - **Giant-title parallax**: elements with `data-parallax="<speed>"` (`.hero__title`, every
   `.section__title`) get a `translateY` offset proportional to distance from the viewport's
   vertical center (`(viewportHeight/2 - elementCenter) * speed`), via a `rAF`-throttled
@@ -127,17 +129,58 @@ framework — plain HTML/CSS, plus GSAP core + `ScrollTrigger` + `ScrollSmoother
   fade-in, same as the rest of that section.
 - `.skip-link` is a visually-hidden-until-focused "본문 바로가기" link, first element in `<body>`,
   jumping keyboard/screen-reader users past the intro splash and nav straight to `#top`.
-- **Strengths cards**: `#strengths` holds four `.card` items in one `.card-grid` (originally three
-  cards + a separate `.stat-cell` stat strip, later rewritten as a fourth card for visual
-  consistency; `.stat-cell`/`.strengths__stats` CSS is unused now but kept as a reusable
-  primitive). The pinned horizontal-scroll carousel's JS reads `.card` count from the DOM
-  dynamically — adding/removing cards needs no JS/CSS edits.
+- **Strengths split layout**: `#strengths` wraps its content in `.section__inner` (max-width
+  1180px, centered — the same wrapper every other section uses; without it the section runs
+  full-bleed to the viewport edge on wide monitors instead of aligning with the rest of the page)
+  around `.strengths-layout` (CSS grid, 1fr/1fr — even split so the gap gutter lands on the
+  section's horizontal center). The left column is two nested elements, not one:
+  `.strengths-aside-cell` is the actual grid item, stretched by the grid's default
+  `align-items: stretch` to the same height as `.strengths-cards`; `.strengths-aside` (the
+  `03 / 핵심 강점` label + title, `text-align: right` so both sit close to the cards column, reverts
+  to `text-align: left` in the sub-900px collapsed layout) is nested one level inside that. That
+  nesting exists so `.strengths-aside-cell` can `display: flex; align-items: center` and vertically
+  center `.strengths-aside` within the cell's full stretched height (same height as
+  `.strengths-cards`) — this used to be done with `position: sticky` on `.strengths-aside` itself,
+  but GSAP's own docs warn against combining `position: sticky` with `ScrollTrigger.pin` on the same
+  element: sticky's scroll-dependent bounding rect confuses the pin's `'center center'` start-point
+  math (verified empirically — it pinned the title against the *bottom* of the viewport instead of
+  the center). Flex-centering instead gives `.strengths-aside` a plain, scroll-independent natural
+  position, which is what the active path — a `ScrollTrigger.pin` on `.strengths-aside` in main.js,
+  same reason `.nav`/`.intro` use `pin` instead of relying on sticky (see "ScrollSmoother wrapper"
+  below: ScrollSmoother transforms `#smooth-content` rather than moving real `scrollTop`, so native
+  sticky never sees itself as scrolled) — measures from. That pin's trigger `start: 'center center'`
+  (not `'top top'`) is what makes the pin hold the title vertically centered in the viewport: it
+  starts pinning the moment `.strengths-aside`'s own center crosses the viewport's center as the
+  section scrolls in, then holds that exact screen position until `end`. The flex-centering also
+  doubles as the no-JS/`prefers-reduced-motion` fallback — without JS the title just renders
+  centered in its column instead of tracking scroll (not truly "sticky," but visually reasonable for
+  a rarely-hit degrade path). That pin is wrapped in
+  `ScrollTrigger.matchMedia({'(min-width: 901px)': ...})` rather than a one-time `innerWidth` check,
+  so it's torn down and recreated if the viewport crosses the 900px cutoff after load (a resize, a
+  tablet rotation) instead of drifting out of sync with the CSS layout underneath it.
+  `.strengths-aside` deliberately carries no `.reveal` class, unlike other section intros — this pin
+  is transform-type (required under ScrollSmoother), which leaves the element's own transform alone
+  instead of overriding it, so `.reveal`'s CSS-transition transform would still be live and stack
+  additively with the pin's, offsetting the pinned title dozens of px off from its intended spot.
+  Right column `.strengths-cards` is four
+  `.card` items (originally three cards + a separate `.stat-cell` stat strip, later rewritten as a
+  fourth card for visual consistency; `.stat-cell`/`.strengths__stats` CSS is dead code now, not a
+  reusable primitive — nothing in the markup references either class) stacked vertically, each with
+  its own (non-pinned) `ScrollTrigger` in main.js that fades/tips it down into place
+  (`opacity`/`y`/`rotateX`, `scrub: 1`) as it crosses into view — `.strengths-cards`' `perspective`
+  gives that `rotateX` real depth. Below 900px both columns collapse into one
+  (`.strengths-layout { display: block }`, JS pin torn down via `matchMedia`), same cutoff
+  `.about__cards` uses.
+  This replaced an earlier pinned horizontal-scroll 3D-fan carousel (and the curtain-dim transition
+  into `#match` that was tied to its pin height, hence `#match` no longer needs the
+  `position: relative` that curtain painting required) — nothing in this layout resizes the page, so
+  it needs no extra `ScrollTrigger.refresh()` either.
 - **ScrollSmoother wrapper**: `#smooth-wrapper > #smooth-content` wraps everything in `<body>`
   *except* `.skip-link`, the hidden `#grainNoise` `<svg>`, and `.grain` — those stay as plain
   siblings before the wrapper so they keep native `position: fixed` behavior (a `transform` on an
   ancestor redefines the containing block for `position: fixed`/`absolute` descendants, and
   `ScrollSmoother` transforms `#smooth-content`). A guarded first IIFE calls `ScrollSmoother.create({
-  smooth: 1.2, effects: false, normalizeScroll: true })`, pins `.nav` for the rest of the page
+  smooth: 1.4, effects: false, normalizeScroll: true })`, pins `.nav` for the rest of the page
   (`ScrollTrigger.create({ trigger: '.nav', start: 'top top', endTrigger: 'footer', end: 'bottom
   bottom', pin: true, pinSpacing: false })`), and rewrites `a[href^="#"]` clicks to
   `smoother.scrollTo(smoother.offset(target) - navHeight, true)` instead of native anchor jump.

@@ -32,8 +32,8 @@
 })();
 
 (function () {
-  // Every pin/curtain below (.nav, .intro, the strengths carousel, the two
-  // curtain covers) has its scroll start/end computed once, synchronously,
+  // Every pin/curtain below (.nav, .intro, the curtain covers) has its
+  // scroll start/end computed once, synchronously,
   // from the DOM as it's laid out right now — but Google Fonts/Typekit load
   // async with font-display:swap, so text still on the fallback font at this
   // point can reflow (different line-height/wrapping/element height) once
@@ -414,204 +414,59 @@
 })();
 
 (function () {
-  var section = document.getElementById('strengths');
-  var scroller = document.querySelector('.strengths-scroller');
-  var pinWrap = document.querySelector('.strengths-pin');
-  var track = document.querySelector('.strengths-track');
-  if (!section || !scroller || !pinWrap || !track) return;
+  // Cards fall into place from above as the right-hand column scrolls past,
+  // each keyed to its own position (not pinned) — the vertical-stack
+  // replacement for the old horizontal 3D-fan carousel. rotateX gives the
+  // same "3D" read as the old fan, just tipping the card forward on its way
+  // down instead of rotating it sideways; .strengths-cards' perspective is
+  // what makes that rotateX read as real depth instead of a flat squish.
+  var cards = document.querySelectorAll('#strengths .card');
+  if (!cards.length) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !window.gsap || !window.ScrollTrigger) return;
 
-  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // ponytail: single load-time breakpoint check (matches .about__cards' 900px cutoff),
-  // not ScrollTrigger.matchMedia — revisit if live resize across 900px needs to un-pin cleanly.
-  if (reduced || window.innerWidth <= 900 || !window.gsap || !window.ScrollTrigger) return;
-
-  // Deferred until webfonts are done loading: every measurement below (card
-  // widths, .strengths-pin's own rendered height, hence the whole carousel's
-  // scroll distance) depends on final text metrics. Running it before
-  // Google Fonts/Typekit finish swapping in bakes stale numbers straight
-  // into scroller.style.height and the positions[] array — unlike GSAP's
-  // own pin start/end (which ScrollTrigger.refresh() re-derives from live
-  // DOM afterward, see the font-ready refresh at the top of this script),
-  // these are plain JS values nothing else re-runs, so refresh() alone
-  // can't correct a stale scroller height. This was the "works on the
-  // second scroll pass, not the first (right after a fresh reload)" bug.
-  // document.fonts.ready resolves on the next microtask if fonts were
-  // already loaded, so this costs nothing on a warm cache.
-  (document.fonts ? document.fonts.ready : Promise.resolve()).then(setup);
-
-  function setup() {
-  section.classList.add('is-pin-mode');
-  pinWrap.classList.add('is-horizontal');
   gsap.registerPlugin(ScrollTrigger);
-
-  var items = track.querySelectorAll('.card');
-  // Measured once, right here, before the tween ever touches `track.x` (so
-  // there's no transform to account for) — each item's center-to-viewport-center
-  // offset, i.e. how far the track must move (as -offset) to bring that item to
-  // the middle of the screen. Last one doubles as the total scroll distance.
-  var centerX = window.innerWidth / 2;
-  var widths = Array.prototype.map.call(items, function (item) {
-    return item.getBoundingClientRect().width;
-  });
-  var centers = Array.prototype.map.call(items, function (item, i) {
-    var rect = item.getBoundingClientRect();
-    return rect.left + widths[i] / 2 - centerX;
-  });
-
-  // First card doesn't start centered — it starts shifted off to the right
-  // (only a sliver of its edge peeking into view, a hint there's more to
-  // scroll) and the very first scroll step slides it in to center, same as
-  // every later card-to-card step. So there's one extra position up front:
-  // positions[0] = the hidden/peek state, positions[1..] = each card centered.
-  var peekShift = window.innerWidth / 2 + widths[0] * 0.35;
-  var positions = [-centers[0] + peekShift].concat(centers.map(function (c) { return -c; }));
-  var distance = positions[0] - positions[positions.length - 1];
-  gsap.set(track, { x: positions[0] });
-
-  // pinSpacing:false + an explicit-height scroller, same technique as
-  // .intro-scroller/.edu-scroller — the pinned box's height is intrinsic
-  // (title + track + CSS padding, see .strengths-pin.is-horizontal), so the
-  // scroller needs exactly that plus the extra distance the track travels.
-  var pinHeight = pinWrap.getBoundingClientRect().height;
-  var carouselHeight = pinHeight + distance;
-  // One more pinHeight appended as a tail: .strengths-pin (pinned by the
-  // single ScrollTrigger below) stays pinned through this extra stretch too,
-  // which is exactly the distance #match needs to slide up and fully cover
-  // it afterward (same "cover distance = the pinned element's own height"
-  // reasoning as the hero -> career curtain). This used to be a SECOND,
-  // separate ScrollTrigger pinning the same .strengths-pin right after this
-  // one released — pinning one element from two independent ScrollTriggers
-  // desynced on reverse scroll (stretched/blank scroll going back up), so
-  // it's folded into this single pin instead; onUpdate below rescales
-  // progress back to the carousel's own fraction so the card pacing itself
-  // is unchanged, then just holds the last card through the tail.
-  var totalHeight = carouselHeight + pinHeight;
-  scroller.style.height = totalHeight + 'px';
-
-  // 3D fanned/offset stack (see CSS): each item's --offset is its live
-  // distance from viewport center, measured in card-widths — 0 exactly at
-  // center, growing toward +/-1 as it slides away. Computed from the track's
-  // known translation + each item's static center (not getBoundingClientRect,
-  // which would read back the item's own --offset-driven translateX and
-  // never quite settle on exactly 0 at the snap point).
-  function updateOffsets() {
-    var tx = gsap.getProperty(track, 'x');
-    items.forEach(function (item, i) {
-      var offset = (centers[i] + tx) / widths[i];
-      item.style.setProperty('--offset', offset.toFixed(3));
-      item.style.setProperty('--abs-offset', Math.min(Math.abs(offset), 1.5).toFixed(3));
-    });
-  }
-
-  // Not scrubbed: raw scroll progress is only used to pick which position is
-  // "current" (0 = the hidden peek state, 1..n = each card centered).
-  // Whenever that step changes, the track is force-tweened straight to that
-  // position — no continuous mid-drag, just a short eased jump each time
-  // scroll crosses into the next/previous zone (including the very first
-  // reveal of card 1).
-  var currentStep = 0;
-  ScrollTrigger.create({
-    trigger: scroller,
-    start: 'top top',
-    // '+=totalHeight' (an exact pixel offset from start) instead of
-    // 'bottom bottom' (a string reference to the trigger's own rect) —
-    // confirmed via debug logging that 'bottom bottom' was getting
-    // recomputed short by ~one pinHeight on refresh (the curtain tail
-    // wasn't being honored), even though scroller.style.height was
-    // genuinely set to the full totalHeight. An explicit pixel distance
-    // from start sidesteps whatever GSAP does internally when re-deriving
-    // a trigger's "bottom" on refresh.
-    end: '+=' + totalHeight,
-    pin: pinWrap,
-    pinSpacing: false,
-    anticipatePin: 1,
-    onRefresh: function (self) {
-      console.log('[strengths pin debug] onRefresh', { start: self.start, end: self.end, duration: self.end - self.start, expectedTotal: totalHeight });
-    },
-    onLeave: function (self) {
-      console.log('[strengths pin debug] onLeave (pin released, scrolling forward)', { scrollY: window.scrollY, start: self.start, end: self.end });
-    },
-    onUpdate: function (self) {
-      // self.progress spans the whole scroller (carousel + curtain tail)
-      // now — rescale back to the carousel's own fraction first, clamped
-      // to 1, so cards swap at exactly the same scroll pace as before and
-      // simply hold at the last card through the extra tail.
-      var carouselProgress = Math.min(self.progress * totalHeight / carouselHeight, 1);
-      var step = Math.round(carouselProgress * (positions.length - 1));
-      if (step === currentStep) return;
-      if (step === positions.length - 1) {
-        console.log('[strengths pin debug] reached last card', { scrollY: window.scrollY, progress: self.progress });
+  cards.forEach(function (card) {
+    gsap.fromTo(card, { opacity: 0, y: -70, rotateX: -25 }, {
+      opacity: 1,
+      y: 0,
+      rotateX: 0,
+      ease: 'power2.out',
+      scrollTrigger: {
+        trigger: card,
+        start: 'top 85%',
+        end: 'top 55%',
+        scrub: 1
       }
-      currentStep = step;
-      items.forEach(function (el) { el.classList.remove('card--float'); });
-      gsap.to(track, {
-        x: positions[step],
-        duration: 0.65,
-        ease: 'back.out(2.4)', // bigger overshoot past the target then springs back — the bounce
-        overwrite: true,
-        onUpdate: updateOffsets,
-        onComplete: function () {
-          // step 0 is the hidden peek state (no card centered yet)
-          if (step >= 1) items[step - 1].classList.add('card--float');
-        }
+    });
+  });
+
+  // CSS position:sticky on .strengths-aside (see stylesheet) is the fallback
+  // for when this bails out — under ScrollSmoother it silently never sticks,
+  // same reason .nav/.intro use ScrollTrigger.pin instead (ScrollSmoother
+  // transforms #smooth-content rather than moving real scrollTop, so sticky
+  // never sees itself as scrolled). Same 900px cutoff as the split layout
+  // itself: below it .strengths-aside is static, nothing to pin.
+  //
+  // .strengths-aside deliberately has no .reveal class in the HTML (unlike
+  // most other section intros) — this pin is a transform-type pin (required
+  // under ScrollSmoother), which leaves the element's own transform alone
+  // rather than overriding it, so .reveal's CSS-transition transform would
+  // still be live and stack additively with the pin's. In practice that
+  // showed up as the pinned title sitting dozens of px lower than intended.
+  //
+  // matchMedia (not a plain innerWidth check) so the pin is created/torn
+  // down again if the viewport crosses the 900px cutoff after load — a
+  // resize or a tablet rotation, not just the initial page width.
+  ScrollTrigger.matchMedia({
+    '(min-width: 901px)': function () {
+      ScrollTrigger.create({
+        trigger: '.strengths-aside',
+        start: 'center center',
+        endTrigger: '.strengths-cards',
+        end: 'bottom center',
+        pin: true,
+        pinSpacing: false
       });
     }
-  });
-  updateOffsets(); // set the resting state before any scrolling happens
-
-  // The lone document.fonts.ready → ScrollTrigger.refresh() (top of this
-  // script) fires before this setup() runs, so it measures the page BEFORE
-  // scroller.style.height grows above. Nothing re-measures after — the nav
-  // pin's endTrigger:'footer' and ScrollSmoother's scroll bounds stay cached
-  // at the shorter pre-growth height, so footer becomes unreachable by
-  // scroll on desktop widths (mobile never hits this since the carousel
-  // bails above and never grows the page). One more refresh here fixes it.
-  ScrollTrigger.refresh();
-  }
-})();
-
-(function () {
-  // Dims .strengths-pin as #match rises to cover it. The actual pinning for
-  // this curtain phase lives in the single ScrollTrigger inside the carousel
-  // IIFE above (its scroller height has a trailing pinHeight tail for
-  // exactly this). This tween is independent of any pin (just a scrub keyed
-  // to #match's own position). Same 900px/reduced-motion/no-gsap gate as the
-  // carousel above, since under that width .strengths-pin is never pinned or
-  // sized to a screen-tall block.
-  //
-  // end is 'top 30%' rather than 'top top': the covered (hidden) portion of
-  // .strengths-pin and the dimmed portion both grow together as #match rises
-  // over the SAME scroll range, so finishing the dim exactly at full cover
-  // ('top top') means it only ever reaches its darkest value on the sliver
-  // still exposed right before it's completely hidden — imperceptible (this
-  // was the "curtain doesn't seem to do anything" bug: confirmed via debug
-  // logging that the opacity tween itself was scrubbing correctly, 1 -> 0.3,
-  // it just finished at the same moment there was nothing left on screen to
-  // see it on). Finishing at 'top 30%' — while #match still only covers the
-  // bottom ~70% — completes the dim while a good two-line-ish strip is still
-  // visibly exposed, so the darkening actually reads before that strip too
-  // gets covered.
-  var pinWrap = document.querySelector('.strengths-pin');
-  var match = document.getElementById('match');
-  if (!pinWrap || !match) return;
-  if (window.innerWidth <= 900 || !window.gsap || !window.ScrollTrigger || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  gsap.registerPlugin(ScrollTrigger);
-  // Deferred the same way and for the same reason as the carousel IIFE
-  // above: #match's document position depends on #strengths's final
-  // (post-tail) height, which itself depends on webfonts being done. Promise
-  // .then() callbacks on the same already-registered document.fonts.ready
-  // fire in registration order, so this runs after that IIFE's setup().
-  (document.fonts ? document.fonts.ready : Promise.resolve()).then(function () {
-    gsap.to(pinWrap, {
-      opacity: 0.3,
-      ease: 'none',
-      scrollTrigger: {
-        trigger: match,
-        start: 'top bottom',
-        end: 'top 30%',
-        scrub: true
-      }
-    });
   });
 })();

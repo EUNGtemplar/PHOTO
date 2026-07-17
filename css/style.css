@@ -402,12 +402,11 @@ em { font-style: normal; color: var(--accent-text); }
 .section { border-top: 1px solid var(--gray-850); padding: var(--section-pad-y) var(--section-pad-x); }
 #career { border-top: none; }
 .section--alt { background: #0a0a0a; }
-/* "Curtain" cover (see the pin/dim scripts by .hero and by the strengths
-   carousel): needs an opaque background + its own stacking position so it
-   actually paints over the pinned (transformed) element it's covering,
-   instead of a plain-static box painting below positioned siblings by
-   default. */
-#career, #match { position: relative; z-index: 1; background: var(--black-000); }
+/* "Curtain" cover (see the pin/dim script by .hero): needs an opaque
+   background + its own stacking position so it actually paints over the
+   pinned (transformed) hero it's covering, instead of a plain-static box
+   painting below positioned siblings by default. */
+#career { position: relative; z-index: 1; background: var(--black-000); }
 /* Domed top edge: same fill as #career's own background, sitting flush
    against its real top edge and bulging upward — so the straight line that
    border-top used to draw there reads as a convex arc instead, full-bleed
@@ -483,26 +482,54 @@ em { font-style: normal; color: var(--accent-text); }
   .about__cards { display: none; }
 }
 
-/* Card grid (strengths) — no border/background here on purpose: the old
-   hairline-divider grid look (Curriculum Reference era) fought the
-   Editorial Numeral Bleed concept below by drawing a visible box around
-   every card on the mobile/no-JS fallback (the pinned carousel sidesteps
-   this via .card-grid{display:contents}, so it only showed up off the
-   pinned path). Real gap instead of a 1px divider line. */
-.card-grid {
+/* Strengths split layout: sticky label+title on the left, cards stacking
+   top to bottom on the right as the section scrolls past (per-card
+   ScrollTrigger reveal lives in JS). .strengths-aside-cell is the actual
+   grid item — the grid's default align-items:stretch stretches ITS box to
+   the same height as .strengths-cards. .strengths-aside (the sticky element)
+   is nested one level inside that, deliberately NOT the grid item itself:
+   position:sticky needs room to move within an ancestor box taller than
+   itself, so if the stretched grid item and the sticky element were the same
+   node, that node's own box would already span the full row height with
+   nothing left to move through, and sticky would never visibly engage.
+   Collapses to one column below 900px, the same cutoff .about__cards uses. */
+.strengths-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(16px, 3vw, 40px);
+}
+/* .strengths-aside-cell centers .strengths-aside vertically within its own
+   stretched (grid align-items:stretch) height via flex, instead of the
+   previous position:sticky. GSAP's own docs warn against mixing
+   position:sticky with ScrollTrigger.pin on the same element — sticky's
+   scroll-dependent rect confuses ScrollTrigger's 'center center' start-point
+   math (measured empirically here: it pinned the title against the bottom
+   of the viewport, not the center). Flex-centering gives GSAP a plain,
+   scroll-independent natural position to measure from, so the pin below
+   (main.js, start: 'center center') captures the correct viewport-centered
+   spot. It also doubles as the no-JS/reduced-motion fallback: without JS the
+   title just sits centered in its column instead of tracking scroll. */
+.strengths-aside-cell { display: flex; align-items: center; }
+.strengths-aside { text-align: right; }
+.strengths-cards {
+  display: flex;
+  flex-direction: column;
   gap: 40px;
+  /* gives the per-card rotateX entrance (see JS) real depth instead of a flat squish */
+  perspective: 1200px;
+}
+@media (max-width: 900px) {
+  .strengths-layout { display: block; }
+  .strengths-aside { position: static; margin-bottom: 48px; text-align: left; }
 }
 /* "Editorial numeral bleed" look: no card box — a giant outlined numeral
    bleeds off the card's own top-left corner and the headline sits directly
    over it on the black canvas. Deliberately NOT overflow:hidden here — the
    numeral is positioned with a negative top offset (see .card__num), so
    clipping on .card itself would always crop that same slice off the top
-   of every numeral, no matter how tall the card grows. The outer
-   .strengths-pin.is-horizontal already clips at the whole section's edge
-   (see below), so the bleed is free to spill into the section's own
-   negative space instead of being cut by its own box. */
+   of every numeral, no matter how tall the card grows. Nothing above it in
+   the vertical stack clips either, so the bleed is free to spill into the
+   gap above each card. */
 .card {
   position: relative;
   background: transparent;
@@ -553,115 +580,6 @@ em { font-style: normal; color: var(--accent-text); }
   color: var(--gray-450);
 }
 .strengths__stats { margin-top: 40px; }
-
-/* Strengths horizontal-scroll rig (desktop only, see JS) */
-#strengths.is-pin-mode {
-  /* the pinned box below (title + cards together) sizes itself; .section's
-     own bottom padding would just add dead scroll space after it releases. */
-  padding-bottom: 0;
-}
-/* height is set inline by JS (the pinned box's own intrinsic height, plus
-   however far the track needs to travel) — same pinSpacing:false +
-   explicit-height-wrapper technique as .intro-scroller/.edu-scroller, which
-   is proven to hold correctly under ScrollSmoother; letting ScrollTrigger
-   auto-size a pin spacer here did not. */
-.strengths-scroller { position: relative; }
-.strengths-pin { max-width: 1180px; margin: 0 auto; }
-.strengths-pin.is-horizontal {
-  max-width: none;
-  margin: 0;
-  /* title + track pin and travel together, stacked in one column. min-height
-     (rather than intrinsic content height alone) makes this block fill the
-     viewport while pinned, so justify-content:center actually centers the
-     title+track group on screen instead of hugging the top — JS still just
-     reads the resulting getBoundingClientRect().height, so this stays
-     correct no matter what the content ends up measuring. */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: clamp(48px, 8vh, 96px);
-  padding: 40px 0;
-  min-height: 100svh;
-  /* Own background, not inherited from #strengths: while pinned, this box
-     stays visually fixed on screen, but its ancestor #strengths (whose real
-     height is #strengths-scroller's JS-set carousel distance) keeps
-     scrolling normally and its bottom edge runs out partway through the
-     curtain-cover phase below — without a background of its own here, that
-     revealed a hard seam to #match's black underneath, right through the
-     middle of the frozen card. */
-  background: #0a0a0a;
-  overflow: hidden;
-  /* perspective lives here (a static ancestor), not on .strengths-track below —
-     .strengths-track is the element GSAP actually translates via x, and
-     perspective-origin defaults to 50% 50% of whichever box carries
-     `perspective`. Putting it on the moving track meant the 3D vanishing
-     point scrolled along with the track instead of staying pinned to the
-     viewport center, so a "centered" card wasn't rotating around true center. */
-  perspective: 1400px;
-}
-.strengths-pin.is-horizontal .section__inner {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0 var(--section-pad-x);
-  width: 100%;
-}
-.strengths-pin.is-horizontal .strengths-track {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  width: max-content;
-  /* first card starts centered in the viewport, last card ends centered —
-     half a card's width short of dead-center on each side (keep in sync with
-     .card's flex-basis below: this is always half of that value) */
-  padding: 0 calc(50vw - clamp(210px, 22vw, 310px));
-  will-change: transform;
-}
-.strengths-pin.is-horizontal .strengths-track .card-grid { display: contents; }
-.strengths-pin.is-horizontal .card {
-  /* wide canvas gives the bleeding numeral + headline room to breathe as
-     negative space (poster composition, not a tightly-filled box); clamp
-     (not vw-only) so the half-width used in the track padding above stays
-     in sync (half of this clamp's own min/max). */
-  flex: 0 0 clamp(420px, 44vw, 620px);
-  min-height: 420px;
-  /* 3D fanned/offset stack: --offset/--abs-offset are set continuously by
-     JS from each card's live distance from viewport center (in card-widths,
-     not a discrete index) — 0 exactly at center, growing toward ±1+ as a
-     card slides away. Same shape as the classic CSS-variable card-carousel
-     effect, just driven by scroll-scrub instead of a discrete active index. */
-  --offset: 0;
-  --abs-offset: 0;
-  transform:
-    rotateY(calc(var(--offset) * -40deg))
-    translateZ(calc(var(--abs-offset) * -14rem))
-    translateX(calc(var(--offset) * -1.4rem));
-  filter: blur(calc(var(--abs-offset) * 0.4rem));
-  opacity: calc(1 - var(--abs-offset) * 0.75);
-  will-change: transform, opacity, filter;
-}
-/* Idle float for the centered/active card only (class toggled by the
-   strengths-pin JS on step change) — keyframes repeat the offset-driven
-   rotateY/translateZ/translateX terms so the float composes with the 3D
-   fan instead of overriding it while the animation is running. */
-@keyframes card-float {
-  0%, 100% {
-    transform:
-      rotateY(calc(var(--offset) * -40deg))
-      translateZ(calc(var(--abs-offset) * -14rem))
-      translateX(calc(var(--offset) * -1.4rem))
-      translateY(0) scale(1);
-  }
-  50% {
-    transform:
-      rotateY(calc(var(--offset) * -40deg))
-      translateZ(calc(var(--abs-offset) * -14rem))
-      translateX(calc(var(--offset) * -1.4rem))
-      translateY(-14px) scale(1.015);
-  }
-}
-.strengths-pin.is-horizontal .card--float {
-  animation: card-float 3s ease-in-out infinite;
-}
 
 /* Ledger (match) */
 .ledger { display: flex; flex-direction: column; }
