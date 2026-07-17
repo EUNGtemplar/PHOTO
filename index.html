@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<script>
+  // 새로고침 시 브라우저가 이전 스크롤 위치를 복원하면, ScrollSmoother/ScrollTrigger가
+  // 초기화되는 시점에 이미 스크롤된 진행률을 읽어버려 인트로 텍스트가 처음부터 다 드러난
+  // 상태로 보이는 버그가 생긴다. 최대한 이르게(레이아웃 전) 복원을 꺼서 항상 맨 위에서 시작하게 한다.
+  if ('scrollRestoration' in history) { history.scrollRestoration = 'manual'; }
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>박현응 · 유키니언 포트폴리오</title>
+<meta name="description" content="박현응 · 경리 지원 포트폴리오. 9년의 매장 운영 경력을 바탕으로 한 실무 역량 소개">
+<meta property="og:type" content="website">
+<meta property="og:title" content="박현응 · 유키니언 포트폴리오">
+<meta property="og:description" content="박현응 · 경리 지원 포트폴리오. 9년의 매장 운영 경력을 바탕으로 한 실무 역량 소개">
+<meta property="og:image" content="img/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="박현응 · 유키니언 포트폴리오">
+<meta name="twitter:description" content="박현응 · 경리 지원 포트폴리오. 9년의 매장 운영 경력을 바탕으로 한 실무 역량 소개">
+<meta name="twitter:image" content="img/og-image.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@100;300;400;500;600;700;800;900&family=Montserrat+Alternates:wght@900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://use.typekit.net/wse5vve.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<a href="#top" class="skip-link">본문 바로가기</a>
+
+<!-- hidden SVG filter: fine film-grain noise laid over the whole page -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="grainNoise" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" result="noise"/>
+      <feColorMatrix in="noise" type="saturate" values="0"/>
+    </filter>
+  </defs>
+</svg>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- LOADING SCREEN: covers the page until every asset (images/fonts/scripts)
+     has finished loading, then fades out — plain fixed sibling like .grain,
+     for the same reason (a transformed ancestor would break position:fixed). -->
+<div class="loading" id="loading" aria-hidden="true">
+  <div class="loading-text">
+    <span style="--index:0">Y</span><span style="--index:1">U</span><span style="--index:2">K</span><span style="--index:3">I</span><span style="--index:4">N</span><span style="--index:5">I</span><span style="--index:6">A</span><span style="--index:7">N</span>
+  </div>
+</div>
+
+<!-- ScrollSmoother wrapper: stays outside so .grain / .skip-link keep native fixed positioning -->
+<div id="smooth-wrapper">
+<div id="smooth-content">
+
+<!-- INTRO / BRAND SPLASH -->
+<div class="intro-scroller">
+  <section id="intro" class="intro">
+    <div class="intro__content">
+      <div class="intro__sequence" aria-hidden="true">
+        <div class="intro__seq-words">
+          <span class="intro__seq-word"><span class="intro__seq-word-inner">Sense</span></span>
+          <span class="intro__seq-word"><span class="intro__seq-word-inner">Style</span></span>
+          <span class="intro__seq-word"><span class="intro__seq-word-inner">Synergy</span></span>
+          <span class="intro__seq-word"><span class="intro__seq-word-inner">Culture</span></span>
+          <span class="intro__seq-word"><span class="intro__seq-word-inner">Humanity</span></span>
+        </div>
+      </div>
+      <p class="intro__logo">YUKINIAN<span class="intro__reg">&reg;</span></p>
+    </div>
+    <a href="#top" class="intro__scroll">
+      <span class="mlabel">Scroll</span>
+      <span class="intro__chevron" aria-hidden="true"></span>
+    </a>
+  </section>
+</div>
+
+<nav class="nav">
+  <a href="#top" class="nav__brand">
+    <span class="nav__name">박현응</span>
+    <span class="mlabel">Park Hyuneung</span>
+  </a>
+  <div class="nav__links">
+    <a class="navlink" href="#career">경력</a>
+    <a class="navlink" href="#about">소개</a>
+    <a class="navlink" href="#strengths">강점</a>
+    <a class="navlink" href="#match">직무역량</a>
+    <a class="navlink" href="#contact">연락처</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header id="top" class="hero">
+  <div class="hero__eyebrow">
+    <span class="mlabel">Portfolio 2026</span>
+    <span class="mlabel mlabel--accent">Yukinian · 경리 지원</span>
+  </div>
+
+  <div class="hero__main">
+    <div class="hero__copy">
+      <h1 class="hero__title" data-parallax="0.07"><span class="char">b</span><span class="char">r</span><span class="char">i</span><span class="char">g</span><span class="char">h</span><span class="char">t</span><span class="char accent-dot">.</span></h1>
+      <p class="mlabel hero__kicker">밝은 · 눈부신 · 빛나는</p>
+      <p class="hero__lead">나 혼자보다 <em>팀이 </em>빛날 때<br>더 뿌듯한 사람입니다.</p>
+      <p class="hero__motive">9년간 현장에서 몸으로 다진 손끝의 신뢰를<br>이제는 유키니언의 살림에 그대로 옮겨보고 싶습니다.</p>
+    </div>
+  </div>
+
+
+</header>
+
+<!-- CAREER TIMELINE -->
+<section id="career" class="section reveal">
+<div class="section__inner section__inner--narrow">
+    <div class="mlabel mlabel--accent">01 / 타임라인</div>
+    <h2 class="section__title" data-parallax="0.04">경력사항</h2>
+    <div class="timeline">
+               <div class="timeline__row">
+        <span class="timeline__year">2011-12</span>
+        <span class="timeline__desc">인천 무형문화재 용두레질 소리 전수 <span class="timeline__role">· 기장</span></span>
+      </div>
+            <div class="timeline__row timeline__row--last">
+        <span class="timeline__year">2012</span>
+        <span class="timeline__desc">YOUNG SAMSUNG <span class="timeline__role">· SAMSUNG</span></span>
+      </div>
+            <div class="timeline__row">
+        <span class="timeline__year">2012–13</span>
+        <span class="timeline__desc">핸즈커피 <span class="timeline__role">· 바리스타 사원</span></span>
+      </div>
+            <div class="timeline__row">
+        <span class="timeline__year">2015-16</span>
+        <span class="timeline__desc">오칠구 <span class="timeline__role timeline__role--accent">· 매니저</span></span>
+      </div>
+      <div class="timeline__row">
+        <span class="timeline__year">2016–19</span>
+        <span class="timeline__desc">스타벅스 <span class="timeline__role timeline__role--accent">· 부점장</span></span>
+      </div>
+      <div class="timeline__row">
+        <span class="timeline__year">2019</span>
+        <span class="timeline__desc">HSF 주식회사 <span class="timeline__role timeline__role--accent">· 매니저</span></span>
+      </div>
+            <div class="timeline__row">
+        <span class="timeline__year">2019–22</span>
+        <span class="timeline__desc">테일러커피 <span class="timeline__role timeline__role--accent">· 점장 (운영 전반·브랜드 디자인)</span></span>
+      </div>
+                  <div class="timeline__row">
+        <span class="timeline__year">2023</span>
+        <span class="timeline__desc">멀티캠퍼스 프론트엔드<span class="timeline__role timeline__role--accent">· 팀장 1등 수상</span></span>
+      </div>
+                  <div class="timeline__row">
+        <span class="timeline__year">2024</span>
+        <span class="timeline__desc">HOMEZLE 주식회사 <span class="timeline__role">· 웹 디자이너</span></span>
+      </div>
+               <div class="timeline__row">
+        <span class="timeline__year">2025-26</span>
+        <span class="timeline__desc">네슬레 코리아 <span class="timeline__role">· 커피 스페셜리스트</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about" class="section reveal">
+  <div class="about__cards" aria-hidden="true">
+    <img class="about__card about__card--1" src="img/Yu1.webp" alt="">
+    <img class="about__card about__card--2" src="img/Yu2.webp" alt="">
+    <img class="about__card about__card--3" src="img/Yu3.webp" alt="">
+    <img class="about__card about__card--4" src="img/Yu4.webp" alt="">
+    <img class="about__card about__card--5" src="img/Yu5.webp" alt="">
+    <img class="about__card about__card--6" src="img/Yu6.webp" alt="">
+  </div>
+<div class="section__inner section__inner--narrow">
+    <div class="mlabel mlabel--accent">02 / 자기소개</div>
+    <h2 class="section__title section__title--wide" data-parallax="0.04">9년의 현장 관리 노하우 <br><em>팀원에서 매니저까지 <br> 증명하는 사람.</em></h2>
+    <div class="about__grid">
+      <p class="about__text">9년간 다양한 직군과 매장에서 사람을 이끌며 쌓은 실무 감각과 책임감으로, 회사의 안살림을 책임지는 경리·경영지원 담당자가 되고자 지원했습니다. 경리 업무를 직접 해본 적은 없지만 사원으로 시작해 점장이 되기까지, 여러 브랜드의 매니저로 매장 전체의 손익을 관리하고 인력을 운용하며 숫자를 정확히 다루는 일의 중요성을 몸소 배웠습니다.</p>
+      <p class="about__text">전 직원을 대상으로 이론부터 실무까지 아우르는 교육 과정을 설계하고 일정을 조율해본 경험은 사내 교육 프로그램이나 프로젝트 운영에도 바로 적용할 수 있습니다. 매일 재고를 파악하고 매장을 관리하며 길러온 꼼꼼함은 경리 실무에서 제 가장 큰 강점이고, 외부 업체 또는 타 팀원들과 협업할 때 배운 커뮤케이션 스킬들을 활용할 수 있습니다. </p>
+      <p class="about__text">직접 부딪치고 성장하며 관리해온 시간과 경험을 유키니언에 쏟고 싶습니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- STRENGTHS -->
+<section id="strengths" class="section section--alt">
+  <div class="strengths-scroller">
+  <div class="strengths-pin">
+    <div class="section__inner reveal">
+      <div class="mlabel mlabel--accent">03 / 핵심 강점</div>
+      <h2 class="section__title" data-parallax="0.04">사람도 공간도 놓치지 않은 네 가지</h2>
+    </div>
+    <div class="strengths-track">
+      <div class="card-grid">
+        <div class="card">
+          <div class="card__num" aria-hidden="true">01</div>
+          <div class="card__body">
+            <h3 class="card__title">운영자의 눈</h3>
+            <div class="card__rule"></div>
+            <p class="card__text">사원에서 매니저·점장까지, 한 팀 적게는 7명 많게는 20명을 직접 이끌며 스케줄 관리부터 고객 응대, 리뷰 모니터링까지 매장 운영 전반을 책임져 왔습니다. <br><br>문제점 하나, 리뷰 한 줄도 모아 원인을 찾아 바로잡는 게 습관이 됐습니다. 숫자 하나 안 맞으면 끝까지 원인을 캐는 습관<br> 유키니언 업무에도 그대로 옮겨오겠습니다.</p>
+          </div>
+          <span class="card__meta mlabel">YUKINIAN / 01–04</span>
+        </div>
+        <div class="card">
+          <div class="card__num" aria-hidden="true">02</div>
+          <div class="card__body">
+            <h3 class="card__title">가르치는 사람</h3>
+            <div class="card__rule"></div>
+            <p class="card__text">신입을 현장을 이끄는 실무자로 키우고 각종 교육 시스템을 직접 고민하고 가르치며 지금까지 100명이 넘는 팀원을 가르쳤습니다. <br><br>한 번으로 끝내지 않고 더 나아갈 수 있게 정리해 반복 공유하며, 팀 전체가 같은 기준으로 움직이도록 다듬어왔습니다. <br> 팀의 일원으로서 나아갈 수 있도록 노력하겠습니다. 
+          </div>
+          <span class="card__meta mlabel">YUKINIAN / 02–04</span>
+        </div>
+        <div class="card">
+          <div class="card__num" aria-hidden="true">03</div>
+          <div class="card__body">
+            <h3 class="card__title">잇는 사람</h3>
+            <div class="card__rule"></div>
+            <p class="card__text">대기업부터 소규모 매장까지, 영국 프리미엄 가구 브랜드 '콘란샵'과의 샵인샵 협업까지 다양한 규모의 조직·고객과 커뮤니케이션 해왔습니다.<br> <br>계약 조건도 일하는 방식도 다른 상대들 사이에서 서로의 입장을 확인하고 조율점을 찾아온 시간이었습니다. <br>상대마다 다른 화법과 속도를 맞춰온 경험. 유키니언에서도 활용하겠습니다.</p>
+          </div>
+          <span class="card__meta mlabel">YUKINIAN / 03–04</span>
+        </div>
+        <div class="card">
+          <div class="card__num" aria-hidden="true">04</div>
+          <div class="card__body">
+            <h3 class="card__title">만들어내는 사람</h3>
+            <div class="card__rule"></div>
+            <p class="card__text">포토샵·일러스트·파이널컷부터 한글·엑셀까지, 필요한 곳에 없다면 독학해서라도 만들어내는 편입니다. <br><br>없던 MD 상품을 직접 기획·디자인해 매출을 20% 이상 끌어올렸고, 필요할 땐 집요하게 파고들어 만들어왔습니다. <br>경리 실무 프로그램도 마찬가지입니다. 처음 써보는 도구라도 손에 익혀서 팀에 보탬이 되겠습니다.</p>
+          </div>
+          <span class="card__meta mlabel">YUKINIAN / 04–04</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- MATCH / LEDGER -->
+<section id="match" class="section reveal">
+<div class="section__inner section__inner--narrow">
+    <div class="mlabel mlabel--accent">04 / 직무 역량 매칭</div>
+    <h2 class="section__title" data-parallax="0.04"><em>정직하게</em>, 빈틈없이.</h2>
+    <p class="section__subtitle">유키니언 업무 <span class="accent">↔</span> 나의 실무 근거</p>
+    <div class="ledger">
+      <div class="ledger__row">
+        <span class="ledger__num">01</span>
+        <span class="ledger__job">신사옥 운영 및 시설 관리</span>
+        <span class="ledger__exp">매장 운영 전반 · 총괄 경험</span>
+      </div>
+      <div class="ledger__row">
+        <span class="ledger__num">02</span>
+        <span class="ledger__job">교육 프로그램 운영 및 일정 관리</span>
+        <span class="ledger__exp">사원 교육 · 직원 양성 · 근무 일정 편성</span>
+      </div>
+      <div class="ledger__row">
+        <span class="ledger__num">03</span>
+        <span class="ledger__job">사내 행사 및 프로젝트 운영</span>
+        <span class="ledger__exp">브랜드 · 웹 프로젝트 기획 및 운영 경험</span>
+      </div>
+      <div class="ledger__row">
+        <span class="ledger__num">04</span>
+        <span class="ledger__job">외부 업체·강사·제휴사 커뮤니케이션</span>
+        <span class="ledger__exp">거래처 · 샵인샵 · 타팀 협업 및 응대</span>
+      </div>
+      <div class="ledger__row">
+        <span class="ledger__num">05</span>
+        <span class="ledger__job">운영 물품 및 재고 관리</span>
+        <span class="ledger__exp">매장 재고 실사 · 소모품 관리</span>
+      </div>
+      <div class="ledger__row ledger__row--last">
+        <span class="ledger__num">06</span>
+        <span class="ledger__job">간단한 정산업무 및 세금계산서 발행</span>
+        <span class="ledger__exp">일일 매출 정산 · 마감 · 시재 관리 경험</span>
+      </div>
+    </div>
+    <p class="ledger__note">매장을 운영하며 매일 반복해온 정산·재고·발주·응대가 곧 경리 업무의 기본기라고 생각합니다.<br> 배우는 자세로 빠르게 적응하며, 현장에서 다져온 실무 감각으로 곧 제 몫을 해내겠습니다.</p>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="section section--alt reveal">
+<div class="section__inner section__inner--narrow">
+    <div class="mlabel mlabel--accent">05 / 연락처</div>
+    <h2 class="section__title section__title--hero" data-parallax="0.05">get in touch<span class="accent-dot">.</span></h2>
+    <div class="contact-intro">
+      <div class="hero__intro-header">
+        <div class="hero__photo hero__photo--sm">
+          <div class="hero__photo-frame">
+            <img src="img/Hyuneung_black.png" alt="박현응 프로필 사진" class="hero__photo-img">
+          </div>
+        </div>
+        <div class="hero__intro-text-block">
+          <div class="hero__intro-name">박현응 <span class="mlabel hero__intro-role">PARK HYUNEUNG</span></div>
+          <p class="hero__intro-text">사원에서 점장까지, 매장의 운영·교육·정산 전반을 이끌어온<br><em>9년의 실무</em>를 유키니언 신사옥 운영으로 잇겠습니다.</p>
+        </div>
+      </div>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-cell">
+        <div class="mlabel">이름</div>
+        <div class="contact-cell__val">박현응 <span class="contact-cell__sub">1993.04.01</span></div>
+      </div>
+      <div class="contact-cell">
+        <div class="mlabel">전화</div>
+        <div class="contact-cell__val">010-9096-4396</div>
+      </div>
+      <div class="contact-cell">
+        <div class="mlabel">이메일</div>
+        <div class="contact-cell__val contact-cell__val--sm">noblegaga@nate.com</div>
+      </div>
+      <div class="contact-cell">
+        <div class="mlabel">거주</div>
+        <div class="contact-cell__val">대구 서대구</div>
+      </div>
+    </div>
+    <div class="contact-cta">
+      <a href="mailto:noblegaga@nate.com" class="btn btn--accent btn--lg">이메일 보내기</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer__brand">bright<span class="accent-dot">.</span></div>
+  <div class="footer__copy">© 2026 박현응 · Portfolio for Yukinian<br>혼자 빛나지 않고 모두가 눈부신 우리가 되도록.</div>
+</footer>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollSmoother.min.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>
