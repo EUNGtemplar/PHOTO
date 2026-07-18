@@ -498,18 +498,24 @@ em { font-style: normal; color: var(--accent-text); }
   grid-template-columns: 1fr 1fr;
   gap: clamp(16px, 3vw, 40px);
 }
-/* .strengths-aside-cell centers .strengths-aside vertically within its own
+/* .strengths-aside-cell aligns .strengths-aside to the TOP of its own
    stretched (grid align-items:stretch) height via flex, instead of the
    previous position:sticky. GSAP's own docs warn against mixing
    position:sticky with ScrollTrigger.pin on the same element — sticky's
    scroll-dependent rect confuses ScrollTrigger's 'center center' start-point
    math (measured empirically here: it pinned the title against the bottom
-   of the viewport, not the center). Flex-centering gives GSAP a plain,
-   scroll-independent natural position to measure from, so the pin below
-   (main.js, start: 'center center') captures the correct viewport-centered
-   spot. It also doubles as the no-JS/reduced-motion fallback: without JS the
-   title just sits centered in its column instead of tracking scroll. */
-.strengths-aside-cell { display: flex; align-items: center; }
+   of the viewport, not the center). Flex-start (not center) matters for
+   timing: the stretched box spans all four cards, so centering the title
+   inside it put the title's natural position far down the document — the
+   pin (main.js, start: 'center center') wouldn't engage until the user had
+   already scrolled well past card 01. Anchoring to the top instead keeps
+   the title's natural position near card 01, so the pin engages while card
+   01 is still in view, and it still ends up perfectly viewport-centered
+   once pinned (that's inherent to 'center center', independent of where the
+   natural position was). It also doubles as the no-JS/reduced-motion
+   fallback: without JS the title just sits at the top of its column instead
+   of tracking scroll. */
+.strengths-aside-cell { display: flex; align-items: flex-start; }
 .strengths-aside { text-align: right; }
 .strengths-cards {
   display: flex;

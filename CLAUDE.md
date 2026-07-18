@@ -138,22 +138,32 @@ framework — plain HTML/CSS, plus GSAP core + `ScrollTrigger` + `ScrollSmoother
   `align-items: stretch` to the same height as `.strengths-cards`; `.strengths-aside` (the
   `03 / 핵심 강점` label + title, `text-align: right` so both sit close to the cards column, reverts
   to `text-align: left` in the sub-900px collapsed layout) is nested one level inside that. That
-  nesting exists so `.strengths-aside-cell` can `display: flex; align-items: center` and vertically
-  center `.strengths-aside` within the cell's full stretched height (same height as
+  nesting exists so `.strengths-aside-cell` can `display: flex; align-items: flex-start` and anchor
+  `.strengths-aside` to the top of the cell's full stretched height (same height as
   `.strengths-cards`) — this used to be done with `position: sticky` on `.strengths-aside` itself,
   but GSAP's own docs warn against combining `position: sticky` with `ScrollTrigger.pin` on the same
   element: sticky's scroll-dependent bounding rect confuses the pin's `'center center'` start-point
   math (verified empirically — it pinned the title against the *bottom* of the viewport instead of
-  the center). Flex-centering instead gives `.strengths-aside` a plain, scroll-independent natural
+  the center). Flex-alignment instead gives `.strengths-aside` a plain, scroll-independent natural
   position, which is what the active path — a `ScrollTrigger.pin` on `.strengths-aside` in main.js,
   same reason `.nav`/`.intro` use `pin` instead of relying on sticky (see "ScrollSmoother wrapper"
   below: ScrollSmoother transforms `#smooth-content` rather than moving real `scrollTop`, so native
   sticky never sees itself as scrolled) — measures from. That pin's trigger `start: 'center center'`
   (not `'top top'`) is what makes the pin hold the title vertically centered in the viewport: it
   starts pinning the moment `.strengths-aside`'s own center crosses the viewport's center as the
-  section scrolls in, then holds that exact screen position until `end`. The flex-centering also
-  doubles as the no-JS/`prefers-reduced-motion` fallback — without JS the title just renders
-  centered in its column instead of tracking scroll (not truly "sticky," but visually reasonable for
+  section scrolls in, then holds that exact screen position until `end` — independent of where the
+  natural position was, so the title still ends up perfectly centered once pinned either way. `end`'s
+  `endTrigger` is card 04's own `.card__meta` label (`#strengths .card:last-child .card__meta`), not
+  `.strengths-cards` itself — the column's bottom edge trails the label by that card's own bottom
+  padding, so pointing at the column released the pin a few px later than "YUKINIAN / 04-04" itself
+  had scrolled past. Top
+  alignment (not center) is what it's anchored to, though, because the stretched cell spans all four
+  cards: centering `.strengths-aside` inside that full height put its natural position — and so the
+  pin's trigger point — far down the document, past where card 01 had already scrolled out of view
+  by the time the pin engaged. Anchoring to the top keeps the title's natural position near card 01,
+  so the pin now engages while card 01 is still on screen. The flex-alignment also
+  doubles as the no-JS/`prefers-reduced-motion` fallback — without JS the title just renders at the
+  top of its column instead of tracking scroll (not truly "sticky," but visually reasonable for
   a rarely-hit degrade path). That pin is wrapped in
   `ScrollTrigger.matchMedia({'(min-width: 901px)': ...})` rather than a one-time `innerWidth` check,
   so it's torn down and recreated if the viewport crosses the 900px cutoff after load (a resize, a

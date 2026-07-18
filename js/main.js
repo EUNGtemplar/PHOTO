@@ -27,6 +27,10 @@
       document.documentElement.style.overflow = '';
       loading.classList.add('is-hidden');
       loading.addEventListener('transitionend', function () { loading.remove(); }, { once: true });
+      // ScrollSmoother's normalizeScroll captures wheel/touch input itself,
+      // so the overflow:hidden above never stopped it — see the pause below.
+      var sm = window.ScrollSmoother && ScrollSmoother.get();
+      if (sm) sm.paused(false);
     }, 2000);
   });
 })();
@@ -62,6 +66,12 @@
     effects: false,
     normalizeScroll: true
   });
+
+  // #loading's overflow:hidden (see above) doesn't reach normalizeScroll's
+  // own wheel/touch capture, so without this the user can scroll straight
+  // through the intro and into the hero reveal while still looking at the
+  // loading screen — released once #loading fades out.
+  if (document.getElementById('loading')) smoother.paused(true);
 
   var navEl = document.querySelector('.nav');
   if (navEl) {
@@ -433,8 +443,8 @@
       ease: 'power2.out',
       scrollTrigger: {
         trigger: card,
-        start: 'top 85%',
-        end: 'top 55%',
+        start: 'top 65%',
+        end: 'top 35%',
         scrub: 1
       }
     });
@@ -462,7 +472,11 @@
       ScrollTrigger.create({
         trigger: '.strengths-aside',
         start: 'center center',
-        endTrigger: '.strengths-cards',
+        // endTrigger targets card 04's own meta label, not the outer
+        // .strengths-cards column — the column's bottom edge trails behind
+        // the label by that card's own bottom padding, so the pin used to
+        // release a few px later than "YUKINIAN / 04-04" itself.
+        endTrigger: '#strengths .card:last-child .card__meta',
         end: 'bottom center',
         pin: true,
         pinSpacing: false
