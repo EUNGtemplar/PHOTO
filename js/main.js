@@ -302,7 +302,7 @@
       color: 'rgba(255,255,255,.15)',
       stagger: 0.08,
       ease: 'none',
-      scrollTrigger: { trigger: '.hero__lead', start: 'top 80%', end: 'top 30%', scrub: 1 }
+      scrollTrigger: { trigger: '.hero__lead', start: 'top 50%', end: 'top -10%', scrub: 1 }
     });
   }
   if (motiveWords.length) {
@@ -310,7 +310,7 @@
       color: 'rgba(255,255,255,.15)',
       stagger: 0.06,
       ease: 'none',
-      scrollTrigger: { trigger: '.hero__motive', start: 'top 80%', end: 'top 30%', scrub: 1 }
+      scrollTrigger: { trigger: '.hero__motive', start: 'top 50%', end: 'top -10%', scrub: 1 }
     });
   }
 
