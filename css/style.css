@@ -305,7 +305,7 @@ em { font-style: normal; color: var(--accent-text); }
 .hero {
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: 128px 40px 200px;
+  padding: 128px 40px 320px;
 }
 .hero__eyebrow {
   display: flex;

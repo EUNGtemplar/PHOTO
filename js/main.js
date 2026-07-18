@@ -287,12 +287,33 @@
   var hero = document.querySelector('.hero');
   if (!chars.length || !hero) return;
 
+  var leadWords = document.querySelectorAll('.hero__lead .word');
+  var motiveWords = document.querySelectorAll('.hero__motive .word');
+
   if (!window.gsap || !window.ScrollTrigger || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     hero.classList.add('is-revealed');
     return;
   }
 
   gsap.registerPlugin(ScrollTrigger);
+
+  if (leadWords.length) {
+    gsap.from(leadWords, {
+      color: 'rgba(255,255,255,.15)',
+      stagger: 0.08,
+      ease: 'none',
+      scrollTrigger: { trigger: '.hero__lead', start: 'top 80%', end: 'top 30%', scrub: 1 }
+    });
+  }
+  if (motiveWords.length) {
+    gsap.from(motiveWords, {
+      color: 'rgba(255,255,255,.15)',
+      stagger: 0.06,
+      ease: 'none',
+      scrollTrigger: { trigger: '.hero__motive', start: 'top 80%', end: 'top 30%', scrub: 1 }
+    });
+  }
+
   var revealed = false;
   gsap.fromTo(chars, {
     opacity: 0,
@@ -449,6 +470,24 @@
       }
     });
   });
+
+  // Dim the pinned left title's color once card 02 nears focus, so attention
+  // shifts to the card content it's introducing rather than the title above it.
+  // Scrubbed to the same range as card 02's own fade-in, so it darkens in step
+  // with that card arriving and un-darkens if the user scrolls back above it.
+  var strengthsTitle = document.querySelector('.strengths-aside .section__title');
+  if (strengthsTitle && cards[1]) {
+    gsap.fromTo(strengthsTitle, { color: '#fff' }, {
+      color: '#454545',
+      ease: 'power2.out',
+      scrollTrigger: {
+        trigger: cards[1],
+        start: 'top 65%',
+        end: 'top 35%',
+        scrub: 2
+      }
+    });
+  }
 
   // CSS position:sticky on .strengths-aside (see stylesheet) is the fallback
   // for when this bails out — under ScrollSmoother it silently never sticks,
