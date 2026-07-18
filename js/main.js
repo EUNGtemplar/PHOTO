@@ -331,9 +331,9 @@
     stagger: 0.03,
     scrollTrigger: {
       trigger: '.hero__title',
-      start: 'center bottom+=50%',
-      end: 'bottom bottom-=40%',
-      scrub: 3,
+      start: 'center bottom+=10%',
+      end: 'bottom bottom-=70%',
+      scrub: 1,
       onUpdate: function (self) {
         if (!revealed && self.progress >= 0.999) {
           revealed = true;
